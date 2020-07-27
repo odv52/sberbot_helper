@@ -1,11 +1,11 @@
 import sqlite3
 
-def save_msg_to_db(username, msg_date, msg_text, msg_id, user_id, user_first_name = 'NULL', user_last_name = 'NULL'):
+def save_msg_to_db(username, msg_date, msg_text, msg_id, user_id):
     conn = sqlite3.connect("db\sberbot.db")
     cursor = conn.cursor()
     cursor.execute("""INSERT INTO allMessages VALUES
                     (?, ?, ?, ?, ?, ?, ?)
-                    """, (username, msg_date, msg_text, msg_id, user_id, user_first_name, user_last_name))
+                    """, (username, msg_date, msg_text, msg_id, user_id))
     conn.commit()
     conn.close()
     print('Message ID:{} saved successfully!'.format(msg_id))
@@ -32,6 +32,18 @@ def register_user(personal_number, names, phone, user_id, username):
         return 0
     
     conn.commit()
+    conn.close()
+    
+def list_users(auth_state = 1):
+    conn = sqlite3.connect("db\sberbot.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""SELECT * FROM userList 
+                       WHERE is_authorised=?""", (auth_state, ))
+        return cursor.fetchall()
+    except:
+        return 0
+    
     conn.close()
         
 #     UPDATE table_name

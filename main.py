@@ -1,11 +1,13 @@
+from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ParseMode
 from aiogram.utils import executor
-from aiogram import Bot, Dispatcher, types
 from aiogram.utils.emoji import emojize
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-import aiogram.utils.markdown as md
+import asyncio
+import time
+import datetime
 import bot_messages
 import logging
 import bot_db_loadFromBot as db
@@ -61,7 +63,23 @@ markup_star_menu = types.ReplyKeyboardMarkup(resize_keyboard=True).row(star_butt
 
 
 #Переместить сюда хендлер на отлов сообщений, если захочу сохранять
+#Запланированные сообщения
 
+async def scheduled(wait_for):
+    while True:
+        await asyncio.sleep(wait_for)
+        post_datetime = datetime.datetime(year=2020, month=7, day=28, hour=2, minute=5)
+        now = datetime.datetime.now()
+        if (post_datetime - datetime.timedelta(minutes=18)) <= now: 
+            user_list = db.list_users(1)
+            text = 'Привет! Сработал Job1'
+            for user in user_list:
+                user_id = user[7]
+                await bot.send_message(user_id, text)
+        else:
+            print('Too early')
+            
+    
 #Команды
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
@@ -78,8 +96,8 @@ async def process_register_help_button(message: types.Message):
     phone_num = '+79779999090'
     first_name = 'Иван'
     last_name = 'Иванов'
-    await message.answer(bot_messages.process_register_help_button, reply_markup = markup_register_menu)
-    await message.answer_contact(phone_num, first_name, last_name, reply_markup = markup_register_menu)
+    await message.answer(bot_messages.process_register_help_button)
+    await message.answer_contact(phone_num, first_name, last_name, reply_markup = markup_main_menu)
 
 @dp.message_handler(commands=['regproc'], state=None)
 async def process_register_enter_command(message: types.Message):
@@ -117,7 +135,7 @@ async def process_register_ok_command(message: types.Message, state: FSMContext)
     if trigger == 1:
         await message.answer('Регистрация окончена!')
     else:
-        await message.answer(process_register_failed_command)
+        await message.answer(bot_messages.process_register_failed_command)
     await state.finish()
     
 @dp.message_handler(commands=['repeat'], state=RegisterUser.S4_finish)
@@ -210,9 +228,10 @@ async def process_star_5_button(message: types.Message):
 async def process_start_command(message: types.Message):
     print('\nDate: {};\nText: {};\nMessage ID: {};\nMessage chat: {};\n'.format(message.date, message.text, message.message_id, message.chat))
     await bot.send_message(message.chat['id'], 'Я получил и сохранил твое сообщение, {}!'.format(message.chat['first_name']))
-    db.save_msg_to_db(message.chat['username'], message.date, message.text, message.message_id, message.chat['id'], message.chat['first_name'], message.chat['last_name'])
+    db.save_msg_to_db(message.chat['username'], message.date, message.text, message.message_id, message.chat['id'])
     
 if __name__ == '__main__':
+    dp.loop.create_task(scheduled(5))
     executor.start_polling(dp, skip_updates=True)
     
     
