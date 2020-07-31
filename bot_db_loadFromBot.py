@@ -4,8 +4,7 @@ def save_msg_to_db(username, msg_date, msg_text, msg_id, user_id):
     conn = sqlite3.connect("db\sberbot.db")
     cursor = conn.cursor()
     cursor.execute("""INSERT INTO allMessages VALUES
-                    (?, ?, ?, ?, ?, ?, ?)
-                    """, (username, msg_date, msg_text, msg_id, user_id))
+                    (?, ?, ?, ?, ?) """, (msg_id, username, user_id, msg_date, msg_text))
     conn.commit()
     conn.close()
     print('Message ID:{} saved successfully!'.format(msg_id))
@@ -25,27 +24,11 @@ def register_user(personal_number, names, phone, user_id, username):
                                 user_id=?
                             WHERE personal_number=? AND user_firstname=?""", (username, user_id, personal_number, first_name))
             conn.commit()
+            conn.close()
             return 1
         else:
+            conn.close()
             return 0
     except:
+        conn.close()
         return 0
-    
-    conn.commit()
-    conn.close()
-    
-def list_users(auth_state = 1):
-    conn = sqlite3.connect("db\sberbot.db")
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""SELECT * FROM userList 
-                       WHERE is_authorised=?""", (auth_state, ))
-        return cursor.fetchall()
-    except:
-        return 0
-    
-    conn.close()
-        
-#     UPDATE table_name
-# SET column1 = value1, column2 = value2...., columnN = valueN
-# WHERE [condition];

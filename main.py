@@ -11,7 +11,10 @@ import datetime
 import bot_messages
 import logging
 import bot_db_loadFromBot as db
-from bot_registerUserStates import RegisterUser
+import re
+from bot_userStates import registerUser
+from bot_mailList import user_mailToSend
+from bot_requests import get_user_info
 
 #Конфигурация библиотеки
 config = dict()
@@ -67,23 +70,25 @@ markup_star_menu = types.ReplyKeyboardMarkup(resize_keyboard=True).row(star_butt
 
 async def scheduled(wait_for):
     while True:
+        curr_time = datetime.datetime.now()
         await asyncio.sleep(wait_for)
-        post_datetime = datetime.datetime(year=2020, month=7, day=28, hour=2, minute=5)
-        now = datetime.datetime.now()
-        if (post_datetime - datetime.timedelta(minutes=18)) <= now: 
-            user_list = db.list_users(1)
-            text = 'Привет! Сработал Job1'
-            for user in user_list:
-                user_id = user[7]
-                await bot.send_message(user_id, text)
-        else:
-            print('Too early')
-            
-    
+        mail_pack = user_mailToSend(curr_time)
+        for mails in mail_pack:
+            for element in mails:
+                await bot.send_message(element['user_id'], 'Message type: {}\nDay: {}\nText: {}'.format(element['tag'], element['practice_day'], element['letter_text']))
+                
+
 #Команды
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.answer(bot_messages.process_start_command, reply_markup = markup_main_menu)
+    
+@dp.message_handler(regexp='^(user_info)\S*')
+async def process_start_command(message: types.Message):
+    info_id = message.text
+    info_id = re.findall(r'^user_info (\d+)', info_id)
+    answer = get_user_info(info_id[0])
+    await message.answer(answer, reply_markup = markup_main_menu)
     
 @dp.message_handler(commands=['register'])
 async def process_register_command(message: types.Message):
@@ -102,23 +107,23 @@ async def process_register_help_button(message: types.Message):
 @dp.message_handler(commands=['regproc'], state=None)
 async def process_register_enter_command(message: types.Message):
     await message.answer(bot_messages.process_register_persnum_command, reply_markup = types.ReplyKeyboardRemove())
-    await RegisterUser.S1_personal_number.set()
+    await registerUser.S1_personal_number.set()
     
-@dp.message_handler(state=RegisterUser.S1_personal_number)
+@dp.message_handler(state=registerUser.S1_personal_number)
 async def process_register_persnum_command(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data({"personal_number": answer})
     await message.answer(bot_messages.process_register_names_command)
-    await RegisterUser.S2_names.set()
+    await registerUser.S2_names.set()
 
-@dp.message_handler(state=RegisterUser.S2_names)
+@dp.message_handler(state=registerUser.S2_names)
 async def process_register_names_command(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data({"names": answer})
     await message.answer(bot_messages.process_register_phone_command)
-    await RegisterUser.S3_phone.set()
+    await registerUser.S3_phone.set()
     
-@dp.message_handler(state=RegisterUser.S3_phone)
+@dp.message_handler(state=registerUser.S3_phone)
 async def process_register_phone_command(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data({"phone": answer})
@@ -126,9 +131,9 @@ async def process_register_phone_command(message: types.Message, state: FSMConte
     await message.answer('Спасибо за уделенное время!')
     await message.answer('Проверьте ваши ответы!\nТабельный номер: {};\nФИО: {};\nНомер телефона: {};\n'.format(data.get('personal_number'), data.get('names'), data.get('phone')))
     await message.answer('Введите /ok, если всё верно и /repeat, если ошиблись')
-    await RegisterUser.S4_finish.set()
+    await registerUser.S4_finish.set()
 
-@dp.message_handler(commands=['ok'], state=RegisterUser.S4_finish)
+@dp.message_handler(commands=['ok'], state=registerUser.S4_finish)
 async def process_register_ok_command(message: types.Message, state: FSMContext):
     data = await state.get_data()
     trigger = db.register_user(data.get('personal_number'), data.get('names'), data.get('phone'), message.chat['id'], message.chat['username'])
@@ -138,10 +143,10 @@ async def process_register_ok_command(message: types.Message, state: FSMContext)
         await message.answer(bot_messages.process_register_failed_command)
     await state.finish()
     
-@dp.message_handler(commands=['repeat'], state=RegisterUser.S4_finish)
+@dp.message_handler(commands=['repeat'], state=registerUser.S4_finish)
 async def process_register_repeat_command(message: types.Message, state: FSMContext):
     await message.answer('Повторим еще раз, введите табельный номер')
-    await RegisterUser.S1_personal_number.set()
+    await registerUser.S1_personal_number.set()
     
 
 #Кнопки главного меню

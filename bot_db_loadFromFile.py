@@ -34,7 +34,38 @@ def practice_list_reader(file):
         
     conn.commit()
     conn.close()
+    
+def shedule_list_reader(file):
+    conn = sqlite3.connect("db\sberbot.db")
+    cursor = conn.cursor()
+    
+    reader = csv.DictReader(file, delimiter=';')
+    lines_to_add = []
+    
+    for line in reader:
+        practice_day = int(line['day'])
+        letter_time = int(line['time'])
+        tag = line['tag']
+        letter_text = line['text']
+
+        lines_to_add.append((practice_day, letter_time, tag, letter_text))
+        
+    if lines_to_add:    
+        cursor.executemany("""INSERT INTO mailList(
+                            practice_day, letter_time, tag, letter_text
+                            ) VALUES
+                            (?, ?, ?, ?)
+                            """, lines_to_add)
+    else:
+        print('CSV file is empty')
+        
+    conn.commit()
+    conn.close()
  
 if __name__ == "__main__":
     with open("data\practice_db.csv", encoding='utf-8-sig') as file:
         practice_list_reader(file)
+        
+    with open("data\mail_test.csv", encoding='utf-8-sig') as file:
+        shedule_list_reader(file)
+        
