@@ -1,5 +1,6 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher.filters import Text
 from aiogram.types import ParseMode
 from aiogram.utils import executor
 from aiogram.utils.emoji import emojize
@@ -12,9 +13,9 @@ import bot_messages
 import logging
 import bot_db_loadFromBot as db
 import re
-from bot_userStates import registerUser
-from bot_mailList import user_mailToSend
-from bot_requests import get_user_info
+from bot_userStates import registerUser, rateMentor
+from bot_mailList import user_mailToSend, user_getAllMails
+from bot_requests import get_user_info, get_user_status, get_user_rate_state
 
 #Конфигурация библиотеки
 config = dict()
@@ -57,12 +58,12 @@ faq_button_back = types.KeyboardButton(emojize('В главное меню :arro
 markup_faq_menu = types.ReplyKeyboardMarkup(resize_keyboard=True).row(faq_button_salary1, faq_button_salary2).row(faq_button_practice, faq_button_tks).row(faq_button_vacation, faq_button_hours).row(faq_button_contacts, faq_button_back)
 
 #Инициализация меню оценки ментора
-star_button_1 = types.KeyboardButton(emojize(':star::anger::anger::anger::anger:'))
-star_button_2 = types.KeyboardButton(emojize(':star::star::anger::anger::anger:'))
-star_button_3 = types.KeyboardButton(emojize(':star::star::star::anger::anger:'))
-star_button_4 = types.KeyboardButton(emojize(':star::star::star::star::anger:'))
-star_button_5 = types.KeyboardButton(emojize(':star::star::star::star::star:'))
-markup_star_menu = types.ReplyKeyboardMarkup(resize_keyboard=True).row(star_button_1, star_button_2).row(star_button_3, star_button_4).row(star_button_5)
+star_button_1 = types.KeyboardButton(emojize('1 из 5'))
+star_button_2 = types.KeyboardButton(emojize('2 из 5'))
+star_button_3 = types.KeyboardButton(emojize('3 из 5'))
+star_button_4 = types.KeyboardButton(emojize('4 из 5'))
+star_button_5 = types.KeyboardButton(emojize('5 из 5'))
+markup_star_menu = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(star_button_1, star_button_2).row(star_button_3, star_button_4).row(star_button_5)
 
 
 #Переместить сюда хендлер на отлов сообщений, если захочу сохранять
@@ -72,11 +73,11 @@ async def scheduled(wait_for):
     while True:
         curr_time = datetime.datetime.now()
         await asyncio.sleep(wait_for)
-        mail_pack = user_mailToSend(curr_time)
-        for mails in mail_pack:
-            for element in mails:
-                await bot.send_message(element['user_id'], 'Message type: {}\nDay: {}\nText: {}'.format(element['tag'], element['practice_day'], element['letter_text']))
-                
+        mail_pack = user_mailToSend(curr_time, by_hour = True)
+        for mail in mail_pack:
+            await bot.send_message(mail['user_id'], 'Message type: {}\nDay: {}\nTime: {}\nText: {}'.format(mail['tag'], mail['practice_day'], mail['letter_time'], mail['letter_text']))                
+
+
 
 #Команды
 @dp.message_handler(commands=['start'])
@@ -87,12 +88,29 @@ async def process_start_command(message: types.Message):
 async def process_start_command(message: types.Message):
     info_id = message.text
     info_id = re.findall(r'^user_info (\d+)', info_id)
-    answer = get_user_info(info_id[0])
+    answer = get_user_info(personal_number = info_id[0], format_message = True)
     await message.answer(answer, reply_markup = markup_main_menu)
     
 @dp.message_handler(commands=['register'])
 async def process_register_command(message: types.Message):
     await message.answer(bot_messages.process_register_command, reply_markup = markup_register_menu)
+    
+@dp.message_handler(state='*', commands='cancel')
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    
+    logging.info('Cancelling state %r', current_state)
+    await state.finish()
+    await message.reply('Cancelled.', reply_markup = markup_main_menu)
+    
+@dp.message_handler(commands=['dev_msgs'])
+async def process_start_command(message: types.Message):
+    mail_pack = user_getAllMails(message.chat['id'], write_to_db = True)
+    for mail in mail_pack:
+        await bot.send_message(mail['user_id'], 'Message type: {}\nDay: {}\nTime: {}\nText: {}'.format(mail['tag'], mail['practice_day'], mail['letter_time'], mail['letter_text']))  
     
     
 #Регистрация
@@ -129,8 +147,8 @@ async def process_register_phone_command(message: types.Message, state: FSMConte
     await state.update_data({"phone": answer})
     data = await state.get_data()
     await message.answer('Спасибо за уделенное время!')
-    await message.answer('Проверьте ваши ответы!\nТабельный номер: {};\nФИО: {};\nНомер телефона: {};\n'.format(data.get('personal_number'), data.get('names'), data.get('phone')))
-    await message.answer('Введите /ok, если всё верно и /repeat, если ошиблись')
+    await message.answer('Проверь свои ответы!\nТабельный номер: {};\nФИО: {};\nНомер телефона: {};\n'.format(data.get('personal_number'), data.get('names'), data.get('phone')))
+    await message.answer('Введи /ok, если всё верно и /repeat, если есть ошибка')
     await registerUser.S4_finish.set()
 
 @dp.message_handler(commands=['ok'], state=registerUser.S4_finish)
@@ -138,7 +156,7 @@ async def process_register_ok_command(message: types.Message, state: FSMContext)
     data = await state.get_data()
     trigger = db.register_user(data.get('personal_number'), data.get('names'), data.get('phone'), message.chat['id'], message.chat['username'])
     if trigger == 1:
-        await message.answer('Регистрация окончена!')
+        await message.answer('Регистрация окончена!', reply_markup = markup_main_menu)
     else:
         await message.answer(bot_messages.process_register_failed_command)
     await state.finish()
@@ -147,6 +165,97 @@ async def process_register_ok_command(message: types.Message, state: FSMContext)
 async def process_register_repeat_command(message: types.Message, state: FSMContext):
     await message.answer('Повторим еще раз, введите табельный номер')
     await registerUser.S1_personal_number.set()
+
+
+#Оценка ментора
+@dp.message_handler(regexp='^(Оценка)\S*', state=None)
+async def process_rate_start(message: types.Message):
+    await message.answer('Отлично, приступим!', reply_markup = types.ReplyKeyboardRemove())
+    user_id = message.chat['id']
+    user_info = get_user_info(user_id = user_id)
+    if user_info['is_authorised']:
+        await message.answer(bot_messages.process_rate_start, reply_markup = types.ReplyKeyboardRemove())
+        await rateMentor.S1_check_mentor.set()
+    else:
+        await message.answer(bot_messages.raise_error_rate_start, reply_markup = markup_main_menu)
+        await state.finish()
+
+@dp.message_handler(state=rateMentor.S1_check_mentor)
+async def process_rate_mentor_check(message: types.Message, state: FSMContext):
+    answer = message.text
+    user_id = message.chat['id']
+    user_info = get_user_info(user_id = user_id)
+    db_mentor = user_info['mentor']
+    await state.update_data({"db_mentor": db_mentor})
+    await state.update_data({"user_mentor": answer})
+    data = await state.get_data()
+    if data.get('user_mentor') == data.get('db_mentor'):
+        rate_list = get_user_rate_state(user_id)
+        print(rate_list)
+        msg = ''
+        if rate_list:
+            for element in rate_list:
+                msg += 'День голосования: {}\nЗадача голосования: {}\nКод голосования для продолжения: {}\n\n'.format(element['user_day'], element['rate_header'], element['message_code'])
+        if msg:
+            await message.answer(msg)
+        else:
+            await message.answer('Доступных голосований нет', reply_markup = markup_main_menu)
+        await rateMentor.S2_check_rates_ammount.set()
+    else:
+        await message.answer(bot_messages.raise_error_rate_mentor_check)
+        await message.answer('Ты ввёл ФИО ментора: {}\nВ базе данных указано, что твой ментор: {}'.format(data.get('user_mentor'), data.get('db_mentor')), reply_markup = markup_main_menu)
+        await state.finish()
+    
+@dp.message_handler(state=rateMentor.S2_check_rates_ammount)
+async def process_rate_amount(message: types.Message, state: FSMContext):
+    answer = message.text
+    answer = re.findall(r'.(\d+)', answer)
+    await state.update_data({"code": answer[0]})
+    data = await state.get_data()
+    await message.answer('Отлично. Отметь кнопками ниже по шкале от 1 до 5, как бы ты ответил на вопрос?', reply_markup = markup_star_menu)
+    await rateMentor.S3_rate.set()    
+    
+@dp.message_handler(state=rateMentor.S3_rate)
+async def process_rate_stars(message: types.Message, state: FSMContext):
+    answer = message.text
+    answer = re.findall(r'(\d) из \d', answer)
+    await state.update_data({"rate": answer[0]})
+    data = await state.get_data()
+    await message.answer('Спасибо за оценку [{}/5]! Оставь, пожалуйста, пару слов об ощущениях или пожеланиях'.format(data.get('rate')), reply_markup = types.ReplyKeyboardRemove())
+    await rateMentor.S4_ratetext.set()
+    
+@dp.message_handler(state=rateMentor.S4_ratetext)
+async def process_rate_finish(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data({"rate_text": answer})
+    data = await state.get_data()
+    await message.answer('Спасибо за уделенное время!')
+    await message.answer('Проверь свои ответы!\nФИО ментора: {};\nОценка: {};\nТекст к оценке: {};\nКод голосования: {};'.format(data.get('user_mentor'), data.get('rate'), data.get('rate_text'), data.get('code')))
+    await message.answer('Введи /ok, если всё верно и /repeat, если есть ошибка')
+    await rateMentor.S5_finish.set()
+
+@dp.message_handler(commands=['ok'], state=rateMentor.S5_finish)
+async def process_rate_ok_command(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    curr_datetime = datetime.datetime.now()
+    trigger = db.save_rate_to_db(message.chat['id'], data.get('rate'), data.get('rate_text'), curr_datetime, data.get('code'))
+    if trigger == 1:
+        await message.answer('Результат успешно записан, спасибо!', reply_markup = markup_main_menu)
+    else:
+        await message.answer('Ошибка регистрации данных, попробуй еще раз или обратись за помощью')
+    await state.finish()
+    
+@dp.message_handler(commands=['repeat'], state=rateMentor.S5_finish)
+async def process_rate_repeat_command(message: types.Message, state: FSMContext):
+    await message.answer('Повторим еще раз, введи имя ментора :)')
+    await rateMentor.S1_check_mentor.set()
+
+# @dp.message_handler(state=rateMentor.S2_rate)
+# async def process_rate_finish(message: types.Message, state: FSMContext):
+#     answer = message.text
+#     await state.update_data({"rate": answer})
+#     await message.answer(bot_messages.process_rate_finish)
+#     await rateMentor.S3_finish.set()
     
 
 #Кнопки главного меню
@@ -161,12 +270,13 @@ async def process_info_button(message: types.Message):
 
 @dp.message_handler(regexp='^(Задачи)\S*')
 async def process_task_button(message: types.Message):
+    curr_time = datetime.datetime.now()
+    mail_pack = user_mailToSend(curr_time, by_hour = False)
     await message.answer(bot_messages.process_task_button, reply_markup = markup_main_menu)
-    
-@dp.message_handler(regexp='^(Оценка)\S*')
-async def process_star_button(message: types.Message):
-    await message.answer(bot_messages.process_star_button, reply_markup = markup_star_menu)
-    
+    print(mail_pack)
+    for mail in mail_pack:
+        await bot.send_message(mail['user_id'], 'Message type: {}\nDay: {}\nTime: {}\nText: {}'.format(mail['tag'], mail['practice_day'], mail['letter_time'], mail['letter_text']))
+
     
 #Кнопки FAQ
 @dp.message_handler(regexp='^(Зарплата)\S*')

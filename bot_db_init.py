@@ -8,7 +8,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS allMessages(
                 message_id INTEGER NOT NULL PRIMARY KEY,
                 username TEXT,
                 user_id INTEGER NOT NULL, 
-                message_date DATE, 
+                message_date DATETIME, 
                 message_text TEXT
                 )
                 """)
@@ -42,19 +42,36 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS mailList(
                 """)
 conn.commit()
 
-#Создание таблиц состояния получения сообщения и голосований
+#Создание таблиц состояния получения сообщения
 cursor.execute("""CREATE TABLE IF NOT EXISTS userStateList(
                 operation_id INTEGER NOT NULL PRIMARY KEY,
-                operation_date DATE DEFAULT CURRENT_TIMESTAMP,
+                operation_date DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
                 user_id INTEGER,
                 user_day INTEGER,
-                is_received_letters BOOLEAN DEFAULT 0,
-                is_rated BOOLEAN DEFAULT 0,
-                rate_message TEXT DEFAULT 'EMPTY'
+                letter_id INTEGER,
+                letter_time INTEGER,
+                tag TEXT,
+                is_sent BOOLEAN DEFAULT 0
                 )
                 """)
 conn.commit()
 
+#Создание таблиц состояния голосования
+cursor.execute("""CREATE TABLE IF NOT EXISTS userRateStateList(
+                operation_id INTEGER NOT NULL PRIMARY KEY,
+                operation_date DATETIME,
+                rate_date DATETIME,
+                rate_header TEXT NOT NULL DEFAULT 'EMPTY',
+                user_id INTEGER,
+                user_day INTEGER,
+                is_rated BOOLEAN DEFAULT 0,
+                rate INTEGER DEFAULT 0,
+                rate_text TEXT DEFAULT 'EMPTY'
+                )
+                """)
+conn.commit()
+
+
+
 conn.close()
 # Создание таблицы соответствия файла и file_id
-# Создание таблицы контента (рассылок)
