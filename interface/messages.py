@@ -1,13 +1,14 @@
 #Команды
 process_start_command = 'Воспользуйся кнопками главного меню для перехода к соответствующему разделу'
 process_register_command = 'Для того, чтобы зарегистрироваться введи /regproc или, в случае возникновения проблем, нажми на кнопку помощи'
+process_help_command = '/start - для перехода в главное меню\n/regproc - для начала регистрации\n/break для Введи /regproc для начала регистрации'
 
 #Регистрация
 process_register_help_button = 'Вот наши контакты, обращайся!'
 process_register_persnum_command = 'Отлично, давай начнем регистрацию! Сначала введи свой табельный номер (только числа)'
 process_register_names_command = 'Теперь введи свои ФИО в формате "Иванов Иван Иванович"'
 process_register_phone_command = 'А теперь - мобильный телефон в формате "89979999090"'
-process_register_finish_command = 'А теперь - мобильный телефон в формате "89979999090"'
+process_register_mentor_command = 'Введи ФИО своего ментора в формате "Иванов Иван Иванович"'
 process_register_failed_command = 'Ошибка регистрации! Возможно, не совпадает табельный номер, имя или ваш аккаунт уже зарегистрирован. Попробуйте еще раз или обратитесь за помощью'
 
 #Рейтинг
@@ -34,9 +35,19 @@ process_faq_hours_button = 'Тут будет информация о том, к
 process_faq_contacts_button = 'Вот наши контакты :)'
 process_faq_back_button = 'Ты снова в главном меню бота'
 
-#Реакции на звезды
-process_star_1_button = 'Реакция на оценку 1/5'
-process_star_2_button = 'Реакция на оценку 2/5'
-process_star_3_button = 'Реакция на оценку 3/5'
-process_star_4_button = 'Реакция на оценку 4/5'
-process_star_5_button = 'Реакция на оценку 5/5'
+#Информация о пользователе
+def msg_full_user_info(user):
+    result = '''
+    Информация о пользователе {}:\n
+    ФИО пользователя - {};
+    Табельный номер - {};
+    Уровень авторизации - {};
+    Телефонный номер - {};
+    ID пользователя - {};
+    Начало стажировки - {};
+    Конец стажировки - {};
+    Количество дней - {};
+    ФИО ментора - {};                     
+    '''.format(user['tg_name'], user['full_name'], user['personnel_num'], user['auth_status'], user['phone_number'],
+                user['tg_uid'], user['date_start'], user['date_end'], user['day'], user['mentor'])
+    return result

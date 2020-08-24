@@ -4,9 +4,10 @@ class registerUser(StatesGroup):
     S1_personal_number = State()
     S2_names = State()
     S3_phone = State()
-    S4_finish = State()
+    S4_mentor = State()
+    S5_finish = State()
 
-class rateMentor(StatesGroup):
+class userRating(StatesGroup):
     S1_check_mentor = State()
     S2_check_rates_ammount = State()
     S3_rate = State()

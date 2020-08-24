@@ -27,7 +27,7 @@ def save_rate_to_db(user_id, rate, rate_text, curr_datetime, code):
         return 0
 
     
-def register_user(personal_number, names, phone, user_id, username):
+def register_user(personal_number, names, phone, mentor, user_id, username):
     conn = sqlite3.connect("db\sberbot.db")
     cursor = conn.cursor()
     last_name, first_name, middle_name = names.split()
@@ -39,8 +39,9 @@ def register_user(personal_number, names, phone, user_id, username):
             cursor.execute("""UPDATE userList
                             SET is_authorised='1',
                                 username=?,
-                                user_id=?
-                            WHERE personal_number=? AND user_firstname=?""", (username, user_id, personal_number, first_name))
+                                user_id=?,
+                                mentor=?
+                            WHERE personal_number=? AND user_firstname=?""", (username, user_id, mentor, personal_number, first_name))
             conn.commit()
             conn.close()
             return 1

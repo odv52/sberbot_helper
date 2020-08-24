@@ -83,8 +83,7 @@ def user_mailToSend(curr_datetime, by_hour = True):
                 user_mail = get_mail(element['user_id'], user_day, conn, cursor)
             if user_mail:
                 for element in user_mail:
-                    if element['tag'] != 'rate':
-                        mail_pack.append(element)
+                    mail_pack.append(element)
                     if by_hour:
                         cursor.execute("""INSERT INTO userStateList(
                                         user_id, user_day, letter_id, letter_time, tag, is_sent
@@ -123,12 +122,11 @@ def user_getAllMails(user_id, write_to_db = False):
                 for element in user_mail:
                     mail_pack.append(element)
                     if element['letter_id'] not in sent_messages:
-                        if element['tag'] != 'rate':
-                            cursor.execute("""INSERT INTO userStateList(
-                                            user_id, user_day, letter_id, letter_time, tag, is_sent
-                                            ) VALUES (?, ?, ?, ?, ?, ?)
-                                            """, (element['user_id'], element['practice_day'], element['letter_id'], element['letter_time'], element['tag'], 1))
-                        elif element['tag'] == 'rate':
+                        cursor.execute("""INSERT INTO userStateList(
+                                        user_id, user_day, letter_id, letter_time, tag, is_sent
+                                        ) VALUES (?, ?, ?, ?, ?, ?)
+                                        """, (element['user_id'], element['practice_day'], element['letter_id'], element['letter_time'], element['tag'], 1))
+                        if element['tag'] == 'rate':
                             cursor.execute("""INSERT INTO userRateStateList(
                                         operation_date, rate_header, user_id, user_day
                                         ) VALUES (?, ?, ?, ?)
