@@ -11,7 +11,7 @@ def practice_list_reader(file):
     for line in reader:
         personnel_num = int(line['ТН'])
         full_name = line['ФИО стажера']
-        phone_number = int(line['Телефон'])
+        phone_num = int(line['Телефон'])
         email = line['Почта']
         date_start = line['Дата выхода на стажировку']
         date_end = line['Окончание стажировки']
@@ -20,12 +20,12 @@ def practice_list_reader(file):
         department = line['Департамент']
         mentor = line['ФИО наставника']
         
-        lines_to_add.append((personnel_num, full_name, phone_number, 
+        lines_to_add.append((personnel_num, full_name, phone_num, 
                              email, date_start, date_end, area, unit, department, mentor))
         
     if lines_to_add:    
         cursor.executemany("""INSERT INTO userListSber(
-                            personnel_num, full_name, phone_number, email,
+                            personnel_num, full_name, phone_num, email,
                             date_start, date_end, area, unit, department, mentor
                             ) VALUES
                             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

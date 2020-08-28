@@ -4,11 +4,10 @@ process_register_command = 'Для того, чтобы зарегистриро
 process_help_command = '/start - для перехода в главное меню\n/regproc - для начала регистрации\n/break для Введи /regproc для начала регистрации'
 
 #Регистрация
-process_register_help_button = 'Вот наши контакты, обращайся!'
-process_register_persnum_command = 'Отлично, давай начнем регистрацию! Сначала введи свой табельный номер (только числа)'
-process_register_names_command = 'Теперь введи свои ФИО в формате "Иванов Иван Иванович"'
-process_register_phone_command = 'А теперь - мобильный телефон в формате "89979999090"'
-process_register_mentor_command = 'Введи ФИО своего ментора в формате "Иванов Иван Иванович"'
+process_register_st0_command = 'Привет! Если ты еще не с нами, то самое время зарегистрироваться!\nВведи свои ФИО в формате "Иванов Иван Иванович"\nЕсли ты тут по ошибке - введи /cancel'
+process_register_st1_command = 'Теперь введи свой номер телефона в формате "89779886060"'
+process_register_st2_command = 'Введи адрес своей электронной почты'
+process_register_st3_command = 'И последнее - твой табельный номер (только числа)'
 process_register_failed_command = 'Ошибка регистрации! Возможно, не совпадает табельный номер, имя или ваш аккаунт уже зарегистрирован. Попробуйте еще раз или обратитесь за помощью'
 
 #Рейтинг
@@ -27,8 +26,7 @@ process_star_button = 'Отметь, как тебе понравился мен
 
 #Команды меню FAQ
 process_faq_salary1_button = 'Тут будет информация о зарплате стажера'
-process_faq_salary2_button = 'Тут будет информация о начислении зарплаты'
-process_faq_vacation_button = 'Тут будет информация об отпуске'
+process_faq_salary2_button = 'Тут Тут будет информация об отпуске'
 process_faq_practice_button = 'Тут будет информация о практике'
 process_faq_tks_button = 'Тут будет информация о резервировании ТКС-ВКС'
 process_faq_hours_button = 'Тут будет информация о том, как изменить часы работы'

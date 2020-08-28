@@ -1,10 +1,10 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 class registerUser(StatesGroup):
-    S1_personal_number = State()
-    S2_names = State()
-    S3_phone = State()
-    S4_mentor = State()
+    S1_name = State()
+    S2_phone_num = State()
+    S3_email = State()
+    S4_personnel_num = State()
     S5_finish = State()
 
 class userRating(StatesGroup):

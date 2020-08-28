@@ -1,60 +1,65 @@
+from prefs import dp
+from aiogram import types
+from interface import messages
+from interface import menu_buttons
+from prefs import sber_db
+from classes.class_userStates import registerUser
+from classes.class_user import User
+from aiogram.dispatcher import FSMContext
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
   
-#Регистрация
-@dp.message_handler(regexp='^(Помощь)\S*')
-async def process_register_help_button(message: types.Message):
-    phone_num = '+79779999090'
-    first_name = 'Иван'
-    last_name = 'Иванов'
-    await message.answer(bot_messages.process_register_help_button)
-    await message.answer_contact(phone_num, first_name, last_name, reply_markup = markup_main_menu)
+#Введем ФИО
+@dp.message_handler(commands=['register'], state=None)
+async def process_register_st0_command(message: types.Message):
+    await message.answer(messages.process_register_st0_command, reply_markup = types.ReplyKeyboardRemove())
+    await registerUser.S1_name.set()
 
-@dp.message_handler(commands=['regproc'], state=None)
-async def process_register_enter_command(message: types.Message):
-    await message.answer(bot_messages.process_register_persnum_command, reply_markup = types.ReplyKeyboardRemove())
-    await registerUser.S1_personal_number.set()
+#Введем номер телефона
+@dp.message_handler(state=registerUser.S1_name)
+async def process_register_st1_command(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data({"name": answer})
+    await message.answer(messages.process_register_st1_command)
+    await registerUser.S2_phone_num.set()
     
-@dp.message_handler(state=registerUser.S1_personal_number)
-async def process_register_persnum_command(message: types.Message, state: FSMContext):
+#Введем почту
+@dp.message_handler(state=registerUser.S2_phone_num)
+async def process_register_st2_command(message: types.Message, state: FSMContext):
     answer = message.text
-    await state.update_data({"personal_number": answer})
-    await message.answer(bot_messages.process_register_names_command)
-    await registerUser.S2_names.set()
-
-@dp.message_handler(state=registerUser.S2_names)
-async def process_register_names_command(message: types.Message, state: FSMContext):
-    answer = message.text
-    await state.update_data({"names": answer})
-    await message.answer(bot_messages.process_register_phone_command)
-    await registerUser.S3_phone.set()
+    await state.update_data({"phone_num": answer})
+    await message.answer(messages.process_register_st2_command)
+    await registerUser.S3_email.set()
     
-@dp.message_handler(state=registerUser.S3_phone)
-async def process_register_phone_command(message: types.Message, state: FSMContext):
+#Введем табельный номер
+@dp.message_handler(state=registerUser.S3_email)
+async def process_register_st3_command(message: types.Message, state: FSMContext):
     answer = message.text
-    await state.update_data({"phone": answer})
-    await message.answer(bot_messages.process_register_mentor_command)
-    await registerUser.S4_mentor.set()
+    await state.update_data({"email": answer})
+    await message.answer(messages.process_register_st3_command)
+    await registerUser.S4_personnel_num.set()
     
-@dp.message_handler(state=registerUser.S4_mentor)
-async def process_register_mentor_command(message: types.Message, state: FSMContext):
+#Проверка введенных данных 
+@dp.message_handler(state=registerUser.S4_personnel_num)
+async def process_register_st4_command(message: types.Message, state: FSMContext):
     answer = message.text
-    await state.update_data({"mentor": answer})
+    await state.update_data({"personnel_num": answer})
     data = await state.get_data()
     await message.answer('Спасибо за уделенное время!')
-    await message.answer('Проверь свои ответы!\nТабельный номер: {};\nФИО: {};\nНомер телефона: {};\nФИО ментора: {};\n'.format(data.get('personal_number'), data.get('names'), data.get('phone'), data.get('mentor')))
-    await message.answer('Введи /ok, если всё верно и /repeat, если есть ошибка')
+    await message.answer('Проверь свои ответы!\nФИО: {};\nНомер телефона: {};\nПочта: {}\nТабельный номер: {};'.format(data.get('name'), data.get('phone_num'), data.get('email'), data.get('personnel_num')))
+    await message.answer('Введи /ok, если всё верно или /repeat, если хочешь исправить')
     await registerUser.S5_finish.set()
     
 @dp.message_handler(commands=['ok'], state=registerUser.S5_finish)
 async def process_register_ok_command(message: types.Message, state: FSMContext):
     data = await state.get_data()
-    trigger = db.register_user(data.get('personal_number'), data.get('names'), data.get('phone'), data.get('mentor'), message.chat['id'], message.chat['username'])
-    if trigger == 1:
-        await message.answer('Регистрация окончена!', reply_markup = markup_main_menu)
+    user = User()
+    if user.register_new(data.get('name'), data.get('phone_num'), data.get('personnel_num'), data.get('email'), message.chat['username'], message.chat['id'], sber_db):
+        await message.answer('Регистрация окончена!', reply_markup = menu_buttons.markup_main_menu)
     else:
-        await message.answer(bot_messages.process_register_failed_command)
+        await message.answer(messages.process_register_failed_command)
     await state.finish()
     
 @dp.message_handler(commands=['repeat'], state=registerUser.S5_finish)
 async def process_register_repeat_command(message: types.Message, state: FSMContext):
     await message.answer('Повторим еще раз, введите табельный номер')
-    await registerUser.S1_personal_number.set()
+    await registerUser.S1_name.set()

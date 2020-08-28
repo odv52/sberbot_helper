@@ -12,12 +12,6 @@ from classes.class_user import User
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.answer(messages.process_start_command, reply_markup = menu_buttons.markup_main_menu)
-    
-
-@dp.message_handler(commands=['register'])
-async def process_register_command(message: types.Message):
-    await message.answer(messages.process_register_command, reply_markup = menu_buttons.markup_register_menu)
-    
 
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
