@@ -52,8 +52,8 @@ async def process_register_st4_command(message: types.Message, state: FSMContext
 @dp.message_handler(commands=['ok'], state=registerUser.S5_finish)
 async def process_register_ok_command(message: types.Message, state: FSMContext):
     data = await state.get_data()
-    user = User()
-    if user.register_new(data.get('name'), data.get('phone_num'), data.get('personnel_num'), data.get('email'), message.chat['username'], message.chat['id'], sber_db):
+    user = User(sber_db)
+    if user.register_new(data.get('name'), data.get('phone_num'), data.get('personnel_num'), data.get('email'), message.chat['username'], message.chat['id']):
         await message.answer('Регистрация окончена!', reply_markup = menu_buttons.markup_main_menu)
     else:
         await message.answer(messages.process_register_failed_command)
@@ -61,5 +61,5 @@ async def process_register_ok_command(message: types.Message, state: FSMContext)
     
 @dp.message_handler(commands=['repeat'], state=registerUser.S5_finish)
 async def process_register_repeat_command(message: types.Message, state: FSMContext):
-    await message.answer('Повторим еще раз, введите табельный номер')
+    await message.answer('Повторим еще раз, введи ФИО')
     await registerUser.S1_name.set()

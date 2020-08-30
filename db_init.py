@@ -47,45 +47,47 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS allMessages(
                 """)
 conn.commit()
 
-# #Создание базы данных для предзагрузки текста и параметров рассылки
-# cursor.execute("""CREATE TABLE IF NOT EXISTS mailList(
-#                 letter_id INTEGER NOT NULL PRIMARY KEY,
-#                 practice_day INTEGER,
-#                 letter_time INTEGER,
-#                 tag TEXT,
-#                 letter_text TEXT
-#                 )
-#                 """)
-# conn.commit()
+#Создание базы данных для предзагрузки текста и параметров рассылки
+cursor.execute("""CREATE TABLE IF NOT EXISTS mailList(
+                letter_id INTEGER NOT NULL PRIMARY KEY,
+                practice_day INTEGER,
+                letter_time INTEGER,
+                tag TEXT,
+                letter_text TEXT
+                )
+                """)
+conn.commit()
 
-# #Создание таблиц состояния получения сообщения
-# cursor.execute("""CREATE TABLE IF NOT EXISTS userStateList(
-#                 operation_id INTEGER NOT NULL PRIMARY KEY,
-#                 operation_date DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
-#                 user_id INTEGER,
-#                 user_day INTEGER,
-#                 letter_id INTEGER,
-#                 letter_time INTEGER,
-#                 tag TEXT,
-#                 is_sent BOOLEAN DEFAULT 0
-#                 )
-#                 """)
-# conn.commit()
+#Создание таблиц состояния получения сообщений
+cursor.execute("""CREATE TABLE IF NOT EXISTS userSentMailList(
+                operation_id INTEGER NOT NULL PRIMARY KEY,
+                operation_datetime DATETIME NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, 'localtime')),
+                tg_uid INTEGER,
+                personnel_num INTEGER,
+                user_day INTEGER,
+                letter_id INTEGER,
+                letter_time INTEGER,
+                tag TEXT
+                )
+                """)
+conn.commit()
 
-# #Создание таблиц состояния голосования
-# cursor.execute("""CREATE TABLE IF NOT EXISTS userRateStateList(
-#                 operation_id INTEGER NOT NULL PRIMARY KEY,
-#                 operation_date DATETIME,
-#                 rate_date DATETIME,
-#                 rate_header TEXT NOT NULL DEFAULT 'EMPTY',
-#                 user_id INTEGER,
-#                 user_day INTEGER,
-#                 is_rated BOOLEAN DEFAULT 0,
-#                 rate INTEGER DEFAULT 0,
-#                 rate_text TEXT DEFAULT 'EMPTY'
-#                 )
-#                 """)
-# conn.commit()
+#Создание таблиц состояния голосований
+cursor.execute("""CREATE TABLE IF NOT EXISTS userRateList(
+                operation_id INTEGER NOT NULL PRIMARY KEY,
+                operation_datetime DATETIME,
+                tg_uid INTEGER,
+                personnel_num INTEGER,
+                user_day INTEGER,
+                letter_id INTEGER,
+                is_rated BOOLEAN DEFAULT 0,
+                rate_date DATETIME,
+                rate_header TEXT NOT NULL DEFAULT 'EMPTY',
+                rate_mark INTEGER DEFAULT 0,
+                rate_text TEXT DEFAULT 'EMPTY'
+                )
+                """)
+conn.commit()
 
 conn.close()
 # Создание таблицы соответствия файла и file_id

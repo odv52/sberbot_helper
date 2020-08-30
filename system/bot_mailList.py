@@ -35,29 +35,29 @@ def get_users(auth_state = 1, user_id = 0):
         return 0
 
 
-def get_mail(user_id, day, conn, cursor, curr_time = -1, dayTo = False):
-    if curr_time == -1 and dayTo == False:
-        cursor.execute("""SELECT * FROM mailList 
-            WHERE practice_day=?""", (int(day), ))
-    elif dayTo:
-        cursor.execute("""SELECT * FROM mailList 
-            WHERE practice_day<=?""", (int(day), ))
-    else:
-        cursor.execute("""SELECT * FROM mailList 
-            WHERE practice_day=? AND letter_time=?""", (int(day), int(curr_time)))  
+# def get_mail(user_id, day, conn, cursor, curr_time = -1, dayTo = False):
+#     if curr_time == -1 and dayTo == False:
+#         cursor.execute("""SELECT * FROM mailList 
+#             WHERE practice_day=?""", (int(day), ))
+#     elif dayTo:
+#         cursor.execute("""SELECT * FROM mailList 
+#             WHERE practice_day<=?""", (int(day), ))
+#     else:
+#         cursor.execute("""SELECT * FROM mailList 
+#             WHERE practice_day=? AND letter_time=?""", (int(day), int(curr_time)))  
     
-    result = cursor.fetchall()
-    mail_list = []
-    for element in result:
-        letter = {}
-        letter['user_id'] = user_id
-        letter['letter_id'] = int(element[0])
-        letter['practice_day'] = element[1]
-        letter['letter_time'] = int(element[2])
-        letter['tag'] = element[3]
-        letter['letter_text'] = element[4]
-        mail_list.append(letter)
-    return mail_list
+#     result = cursor.fetchall()
+#     mail_list = []
+#     for element in result:
+#         letter = {}
+#         letter['user_id'] = user_id
+#         letter['letter_id'] = int(element[0])
+#         letter['practice_day'] = element[1]
+#         letter['letter_time'] = int(element[2])
+#         letter['tag'] = element[3]
+#         letter['letter_text'] = element[4]
+#         mail_list.append(letter)
+#     return mail_list
     
     
 def user_mailToSend(curr_datetime, by_hour = True):

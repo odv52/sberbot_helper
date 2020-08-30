@@ -1,4 +1,5 @@
-#Хендлер на отлов сообщений, которые не попали выше
+#Хендлер на логгирование всех сообщений
+
 @dp.message_handler(state=None)
 async def process_start_command(message: types.Message):
     print('\nDate: {};\nText: {};\nMessage ID: {};\nMessage chat: {};\n'.format(message.date, message.text, message.message_id, message.chat))
