@@ -28,8 +28,8 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 async def process_user_info_command(message: types.Message):
     command = message.text
     personnel_num = re.findall(r'^user_info (\d+)', command)
-    user = User()
-    user.define(personnel_num[0], 'db\sberbot.db')
+    user = User('db\sberbot.db')
+    user.define(personnel_num[0], by_personnel_num == True)
     user.get_sber_info()
     answer = messages.msg_full_user_info(user.userdata)
     await message.answer(answer, reply_markup = menu_buttons.markup_main_menu)

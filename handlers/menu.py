@@ -1,7 +1,10 @@
 from prefs import dp
+from prefs import sber_db
 from aiogram import types
 from interface import messages
 from interface import menu_buttons
+from classes import class_mails
+import datetime
 
 
 #Кнопки главного меню
@@ -14,15 +17,16 @@ async def process_faq_button(message: types.Message):
 #     #document = config['SBER_INFO_ID']
 #     await message.answer_document(document, messages.process_info_button, reply_markup = markup_main_menu)
 
-# @dp.message_handler(regexp='^(Задачи)\S*')
-# async def process_task_button(message: types.Message):
-#     curr_time = datetime.datetime.now()
-#     mail_pack = user_mailToSend(curr_time, by_hour = False)
-#     await message.answer(messages.process_task_button, reply_markup = markup_main_menu)
-#     print(mail_pack)
-#     for mail in mail_pack:
-#         #if mail['tag'] == 'task':
-#         await bot.send_message(mail['user_id'], 'Message type: {}\nDay: {}\nTime: {}\nText: {}'.format(mail['tag'], mail['practice_day'], mail['letter_time'], mail['letter_text']))
+@dp.message_handler(regexp='^(Задачи)\S*')
+async def process_task_button(message: types.Message):
+    curr_time = datetime.datetime.now()
+    tg_uid = message.chat['id']
+    mail_pack = class_mails.user_dailyMail(curr_time, tg_uid, sber_db)
+    await message.answer(messages.process_task_button, reply_markup = markup_main_menu)
+    print(mail_pack)
+    for mail in mail_pack:
+        if mail['tag'] == 'task':
+            await bot.send_message(mail['tg_uid'], text='Message type: {}\nDay: {}\nTime: {}\nText: {}'.format(mail['tag'], mail['practice_day'], mail['letter_time'], mail['letter_text']))
 
 
 #Кнопки FAQ

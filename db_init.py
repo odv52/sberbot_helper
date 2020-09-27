@@ -8,7 +8,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS userListSber(
                 personnel_num INTEGER NOT NULL PRIMARY KEY,
                 full_name TEXT NOT NULL,
                 auth_status INTEGER DEFAULT 0,
-                phone_num INTEGER DEFAULT 'NONE',
+                phone_num TEXT DEFAULT 'NONE',
                 email TEXT DEFAULT 'NONE',
                 tg_name TEXT DEFAULT 'NONE',
                 tg_uid INTEGER DEFAULT 'NONE', 
@@ -24,7 +24,6 @@ conn.commit()
 
 #Создание списка пользователей с данными, занесенными пользователем
 cursor.execute("""CREATE TABLE IF NOT EXISTS userListCustom(
-                personnel_num INTEGER NOT NULL PRIMARY KEY,
                 full_name TEXT NOT NULL,
                 phone_num INTEGER NOT NULL,
                 email TEXT NOT NULL,

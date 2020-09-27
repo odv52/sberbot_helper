@@ -65,7 +65,9 @@ class Mails:
     
 
 def user_hourlyMail(curr_datetime, database):
-    users = search_byAuth(1, database)
+    users = []
+    users.append(search_byAuth(1, database))
+    users.append(search_byAuth(2, database))
     mails = Mails(database)
     mails.compose_mails(get_all=True)
     mails_pack = []
@@ -81,5 +83,18 @@ def user_hourlyMail(curr_datetime, database):
                     usermail_pack.append(mail)
         mails_pack.append(usermail_pack)
     return mails_pack
+
+
+def user_dailyMail(curr_datetime, tg_uid, database):
+    user = User(database)
+    user.define(tg_uid, by_tg_uid = True)
+    user.get_sber_info()
+    mails = Mails(database)
+    mails.compose_mails(user = user, get_currDay = True)
+    return mails.maildata_list
+
+
+    
+    
                 
             
